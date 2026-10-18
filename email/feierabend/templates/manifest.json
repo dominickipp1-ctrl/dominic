@@ -1,0 +1,152 @@
+[
+  {
+    "slug": "welcome-1",
+    "flow": "Welcome",
+    "name": "FK | Welcome 1/5 – Willkommen + Code",
+    "delay": "sofort",
+    "subject": "Dein Feierabend-Geschenk wartet 🌙",
+    "preheader": "10 % auf deinen ersten Feierabend-Komplex – dein Code ist drin.",
+    "bytes": 11828,
+    "klaviyo_template_id": "SMsS39"
+  },
+  {
+    "slug": "welcome-2",
+    "flow": "Welcome",
+    "name": "FK | Welcome 2/5 – Problem & Ritual",
+    "delay": "+1 Tag",
+    "subject": "Dein Kopf hat noch nicht Feierabend?",
+    "preheader": "Und plötzlich ist es elf. Warum dein Abend einen Schlusspunkt braucht.",
+    "bytes": 11612,
+    "klaviyo_template_id": "X3VVRB"
+  },
+  {
+    "slug": "welcome-3",
+    "flow": "Welcome",
+    "name": "FK | Welcome 3/5 – Formel & Transparenz",
+    "delay": "+2 Tage",
+    "subject": "5 Zutaten. Keine Geheimnisse.",
+    "preheader": "Was genau in deinen zwei Gummies steckt – mit exakter Menge.",
+    "bytes": 17831,
+    "klaviyo_template_id": "QQmHSe"
+  },
+  {
+    "slug": "welcome-4",
+    "flow": "Welcome",
+    "name": "FK | Welcome 4/5 – Social Proof & FAQ",
+    "delay": "+2 Tage",
+    "subject": "„Ist es ein Wundermittel? Nein.“",
+    "preheader": "Warum wir diese ehrliche Bewertung besonders mögen.",
+    "bytes": 12198,
+    "klaviyo_template_id": "U6GtvC"
+  },
+  {
+    "slug": "welcome-5",
+    "flow": "Welcome",
+    "name": "FK | Welcome 5/5 – Letzte Chance Code + Bundles",
+    "delay": "+2 Tage",
+    "subject": "Dein 10 % Code läuft bald ab ⏳",
+    "preheader": "Letzte Erinnerung: Sichere dir deinen Willkommensrabatt.",
+    "bytes": 11644,
+    "klaviyo_template_id": "SNDn7R"
+  },
+  {
+    "slug": "checkout-1",
+    "flow": "Abandoned Checkout",
+    "name": "FK | Checkout 1/3 – Erinnerung",
+    "delay": "1 Std.",
+    "subject": "Dein Feierabend wartet noch an der Kasse",
+    "preheader": "Wir haben deinen Warenkorb für dich gespeichert.",
+    "bytes": 11299,
+    "klaviyo_template_id": "TwSV8e"
+  },
+  {
+    "slug": "checkout-2",
+    "flow": "Abandoned Checkout",
+    "name": "FK | Checkout 2/3 – Einwände & Social Proof",
+    "delay": "+23 Std.",
+    "subject": "Noch unsicher? Das fragen sich viele.",
+    "preheader": "Melatonin, Abo, Garantie – die ehrlichen Antworten.",
+    "bytes": 11217,
+    "klaviyo_template_id": "YqYhBF"
+  },
+  {
+    "slug": "checkout-3",
+    "flow": "Abandoned Checkout",
+    "name": "FK | Checkout 3/3 – 10 % Rabatt",
+    "delay": "+24 Std.",
+    "subject": "10 % für deinen ersten Feierabend – nur für dich",
+    "preheader": "Dein Warenkorb ist noch da. Und jetzt gibt’s 10 % on top.",
+    "bytes": 13017,
+    "klaviyo_template_id": "VkviHr"
+  },
+  {
+    "slug": "cart-1",
+    "flow": "Abandoned Cart",
+    "name": "FK | Warenkorb 1/2 – Erinnerung",
+    "delay": "2 Std.",
+    "subject": "Hast du etwas vergessen?",
+    "preheader": "Dein Feierabend-Komplex liegt noch im Warenkorb.",
+    "bytes": 10310,
+    "klaviyo_template_id": "VFBA9m"
+  },
+  {
+    "slug": "cart-2",
+    "flow": "Abandoned Cart",
+    "name": "FK | Warenkorb 2/2 – Social Proof + Pakete",
+    "delay": "+1 Tag",
+    "subject": "„…kaue einfach zwei leckere Gummis. Fertig.“",
+    "preheader": "Was andere über ihren neuen Feierabend sagen.",
+    "bytes": 11857,
+    "klaviyo_template_id": "XwDHQH"
+  },
+  {
+    "slug": "browse-1",
+    "flow": "Browse Abandonment",
+    "name": "FK | Browse 1/3 – Produkt-Erinnerung",
+    "delay": "2 Std.",
+    "subject": "Noch am Überlegen?",
+    "preheader": "Der Feierabend-Komplex – alles auf einen Blick.",
+    "bytes": 10207,
+    "klaviyo_template_id": "SbYjw9"
+  },
+  {
+    "slug": "browse-2",
+    "flow": "Browse Abandonment",
+    "name": "FK | Browse 2/3 – Vergleich",
+    "delay": "+1 Tag",
+    "subject": "Mehr als ein Tee. Ohne Melatonin.",
+    "preheader": "Warum der Feierabend-Komplex anders ist als Tee oder Melatonin.",
+    "bytes": 10711,
+    "klaviyo_template_id": "XPJZ88"
+  },
+  {
+    "slug": "browse-3",
+    "flow": "Browse Abandonment",
+    "name": "FK | Browse 3/3 – Garantie + Pakete",
+    "delay": "+2 Tage",
+    "subject": "Teste ihn 60 Tage – ohne Risiko",
+    "preheader": "Passt er nicht zu dir, bekommst du dein Geld zurück.",
+    "bytes": 11307,
+    "klaviyo_template_id": "XQkfau"
+  },
+  {
+    "slug": "site-1",
+    "flow": "Site Abandonment",
+    "name": "FK | Site 1/2 – Willkommen zurück",
+    "delay": "1 Std.",
+    "subject": "Schön, dass du vorbeigeschaut hast",
+    "preheader": "Gib deinem Tag einen Schlusspunkt – so funktioniert’s.",
+    "bytes": 9879,
+    "klaviyo_template_id": "Wyh9LH"
+  },
+  {
+    "slug": "site-2",
+    "flow": "Site Abandonment",
+    "name": "FK | Site 2/2 – Pakete + Garantie",
+    "delay": "+1 Tag",
+    "subject": "Heute Abend schon Feierabend im Kopf?",
+    "preheader": "Zwei Gummies. Jeden Abend. Und der Feierabend gehört wieder dir.",
+    "bytes": 11707,
+    "klaviyo_template_id": "RNBMUf"
+  }
+]
