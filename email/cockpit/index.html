@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E-Mail-Cockpit GummiVital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one narrow operating column (phone-first) — status first, then numbers, then flows, then the to-do list. Brand navy + gold. */
+:root {
+  --bg: #F6F7F1;
+  --surface: #FFFFFF;
+  --ink: #1B2838;
+  --muted: #5E6878;
+  --line: #E1E4DC;
+  --accent: #B8955A;
+  --accent-soft: #F3EAD9;
+  --good: #2E7D4F;
+  --warn: #B7791F;
+  --bad: #B23A2E;
+  --good-bg: #E5F2EA;
+  --warn-bg: #FBF0DC;
+  --bad-bg: #F8E3E0;
+  --font-display: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111821; --surface: #18222F; --ink: #EEF1F5; --muted: #A3ADBB; --line: #2A3647;
+    --accent: #D2B07A; --accent-soft: #2B2A22;
+    --good: #6FCB94; --warn: #E5B65F; --bad: #F08A7E;
+    --good-bg: #173326; --warn-bg: #3A2F17; --bad-bg: #3D1F1C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111821; --surface: #18222F; --ink: #EEF1F5; --muted: #A3ADBB; --line: #2A3647;
+  --accent: #D2B07A; --accent-soft: #2B2A22;
+  --good: #6FCB94; --warn: #E5B65F; --bad: #F08A7E;
+  --good-bg: #173326; --warn-bg: #3A2F17; --bad-bg: #3D1F1C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-body); }
+.wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 64px; display: flex; flex-direction: column; gap: 22px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-size: 24px; font-weight: 800; }
+h2 { font-size: 17px; font-weight: 800; }
+.sub { color: var(--muted); font-size: 14px; margin: 0; }
+a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; }
+.brand { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin: 0 0 4px; }
+.head-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.chip.live .dot { background: var(--good); }
+button { font: 600 14px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button[disabled] { opacity: .5; cursor: default; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.note { font-size: 13px; color: var(--muted); }
+.err { font-size: 14px; color: var(--bad); background: var(--bad-bg); border-radius: 10px; padding: 10px 12px; }
+/* health */
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.check { display: grid; grid-template-columns: 6px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.check:first-child { border-top: 0; padding-top: 0; }
+.stripe { border-radius: 4px; }
+.sev-bad .stripe { background: var(--bad); } .sev-warn .stripe { background: var(--warn); } .sev-good .stripe { background: var(--good); }
+.check-title { font-weight: 700; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pill { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+.sev-bad .pill { background: var(--bad-bg); color: var(--bad); } .sev-warn .pill { background: var(--warn-bg); color: var(--warn); } .sev-good .pill { background: var(--good-bg); color: var(--good); }
+.check p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+.check .fix { font-size: 14px; margin-top: 4px; }
+/* tiles */
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.tile .k { font-size: 12px; color: var(--muted); font-weight: 600; }
+.tile .v { font-family: var(--font-display); font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.tile .d { font-size: 12px; color: var(--muted); }
+@media (max-width: 640px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+/* chart */
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font: 11px var(--font-body); }
+.chart .bar { fill: var(--accent); }
+.chart .bar.last { fill: var(--ink); }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+/* table */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+.metric.good { color: var(--good); font-weight: 700; } .metric.bad { color: var(--bad); font-weight: 700; }
+.fname { font-weight: 600; }
+.ftag { font-size: 12px; color: var(--muted); }
+/* tasks */
+.group { display: flex; flex-direction: column; gap: 0; }
+.group h3 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 6px 0 4px; }
+.task { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+.task input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ink); cursor: pointer; }
+.task .t { font-weight: 700; }
+.task.done .t { text-decoration: line-through; color: var(--muted); }
+.task p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+.task .links { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 14px; font-weight: 600; }
+.task .who { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+.progress { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .progress > span { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="brand">GummiVital · Klaviyo</p>
+      <h1>E-Mail-Cockpit</h1>
+      <p class="sub" id="subline">Gesundheit, Wachstum und Flow-Leistung deines E-Mail-Marketings.</p>
+    </div>
+    <div class="head-right">
+      <span class="chip" id="mode"><span class="dot"></span><span id="mode-text">Stand 01.11.2026</span></span>
+      <button id="refresh" type="button" disabled>Live aktualisieren</button>
+    </div>
+  </header>
+
+  <section class="panel" aria-labelledby="h-health">
+    <div class="panel-head"><h2 id="h-health">Gesundheits-Check</h2><span class="note" id="health-note"></span></div>
+    <ul class="checks" id="checks"></ul>
+  </section>
+
+  <section aria-label="Kennzahlen" class="tiles" id="tiles"></section>
+
+  <section class="panel" aria-labelledby="h-growth">
+    <div class="panel-head"><h2 id="h-growth">Neue E-Mail-Abonnenten</h2><span class="note" id="growth-note"></span></div>
+    <div class="chart" id="chart"></div>
+    <p class="note" id="growth-hint">Solange keine Ads laufen, ist hier kaum Bewegung normal. Sobald du wieder Traffic hast, zeigt dieses Diagramm, ob dein Popup sammelt.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-flows">
+    <div class="panel-head"><h2 id="h-flows">Flows · letzte 90 Tage</h2><span class="note" id="flows-note"></span></div>
+    <div class="tbl-wrap"><table id="flows"></table></div>
+    <p class="note">Grün = über Branchenschnitt, rot = darunter. Vergleichswerte: Welcome 45 % Öffnung / 8 % Klick, Warenkorb &amp; Checkout 40 % / 10 %, Browse 35 % / 5 %, nach dem Kauf 35 % / 5 %, Winback 20 % / 3 %. Unter ca. 100 Empfängern sind die Raten noch Zufall.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-tasks">
+    <div class="panel-head"><h2 id="h-tasks">Deine Aufgaben</h2><span class="note" id="tasks-note"></span></div>
+    <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+    <div id="tasks"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const K = "Klaviyo";
+const MODEL = "email-cockpit";
+const KL = "https://www.klaviyo.com";
+const SHOP = "https://admin.shopify.com/store/db825b";
+const SETUP = "https://github.com/dominickipp1-ctrl/dominic/blob/claude/magical-cerf-9rgg7o/email/feierabend/SETUP.md";
+const WINDSOR = "https://onboard.windsor.ai/connect?connector=klaviyo&next=/klaviyo/authorize&user=MjE0Nzk3NDY2NA.vgui_ODw_QEYAPXeaCwbWlJDcq4";
+const FREEMAIL = /@(gmx\.(de|net|at|ch)|web\.de|gmail\.com|googlemail\.com|t-online\.de|yahoo\.|outlook\.|hotmail\.|freenet\.de|icloud\.com)/i;
+
+// Audit snapshot (01.11.2026) — shown until live data arrives, and kept if live data is unavailable.
+const SNAPSHOT = {
+  asOf: "01.11.2026",
+  sender: "dominicecm@gmx.de",
+  timezone: "US/Eastern",
+  viewed30: 0,
+  addedToCartMetric: false,
+  lists: [{ name: "Newsletter", count: 2 }, { name: "BF26 Warteliste", count: 4 }, { name: "Feierabend Newsletter", count: 0 }],
+  subs30: 0,
+  orders30: { count: 1, value: 29.99 },
+  growth: { unit: "Monat", labels: ["Mai", "Jun", "Jul", "Aug", "Sep", "Okt"], values: [0, 0, 0, 1, 2, 0] },
+  duplicates: [
+    { key: "Liste „Newsletter“", flows: ["Welcome-Serie - Kunde vs. Nicht-Kunde", "Welcome-Serie … neues produkt", "Welcome-Serie … (Klon) neues produkt"] },
+    { key: "Viewed Product", flows: ["Browse Abandonment - Standard", "Browse Abandonment - Standard neues produkt", "Browse Abandonment -neues produkt"] },
+    { key: "Checkout Started", flows: ["Abandoned Cart Reminder (Email)", "Abandoned Cart Reminder (Email) neues produkt"] }
+  ],
+  feierabendFlows: 0,
+  bounceRate: 0.17,
+  flows: [
+    { name: "Customer Winback", recipients: 6, open: .1667, click: .1667, conv: 0, rpr: 0 },
+    { name: "Abandoned Cart Reminder (Email)", recipients: 8, open: 0, click: 0, conv: 0, rpr: 0 },
+    { name: "Abandoned Cart Reminder (Email) neues produkt", recipients: 3, open: 0, click: 0, conv: 0, rpr: 0 },
+    { name: "Dankesnachricht an Kund*innen - Neu vs. Wiederkehrend", recipients: 4, open: 0, click: 0, conv: 0, rpr: 0 },
+    { name: "Verspätete Erfüllung - Standard", recipients: 2, open: 0, click: 0, conv: 0, rpr: 0 },
+    { name: "Nachverfolgung nach dem Kauf – Aufteilung der Bestellanzahl", recipients: 1, open: 0, click: 0, conv: 0, rpr: 0 }
+  ]
+};
+
+const TASKS = [
+  { group: "Sofort aufräumen", items: [
+    { id: "dup-welcome", t: "Doppelte Welcome-Flows ausschalten", p: "Drei Welcome-Serien hängen live an derselben Liste. Jeder neue Abonnent bekommt alle drei. Lass nur „Welcome-Serie - Kunde vs. Nicht-Kunde“ laufen und stelle die beiden anderen auf „Entwurf“.", links: [["Welcome … neues produkt", KL + "/flow/TDjbsn/edit"], ["Welcome … (Klon) neues produkt", KL + "/flow/VKGRLF/edit"]] },
+    { id: "dup-browse", t: "Doppelte Browse-Flows ausschalten", p: "Drei Browse-Flows reagieren auf dasselbe Ereignis. Behalte „Browse Abandonment - Standard“ für Shilajit und stelle die zwei Kopien auf „Entwurf“.", links: [["Browse … Standard neues produkt", KL + "/flow/YmqiJh/edit"], ["Browse … -neues produkt", KL + "/flow/XBFZzP/edit"]] },
+    { id: "dup-cart", t: "Doppelten Checkout-Flow ausschalten", p: "Die Kopie enthält die alten Shilajit-Mails. Der neue Feierabend-Checkout-Flow ersetzt sie.", links: [["Abandoned Cart … neues produkt", KL + "/flow/XJVgaB/edit"]] },
+    { id: "filter-old", t: "Shilajit-Flows auf Shilajit begrenzen", p: "Trigger-Filter setzen, damit Feierabend-Käufer keine Shilajit-Mails bekommen. Checkout: „Item Names doesn’t contain FEIERABEND“. Browse: „ProductName doesn’t contain FEIERABEND“.", links: [["Checkout-Flow (Shilajit)", KL + "/flow/XxHyMC/edit"], ["Browse-Flow (Shilajit)", KL + "/flow/RpawXV/edit"]] },
+    { id: "windsor", t: "Klaviyo mit Windsor verbinden", who: "macht danach Claude", p: "Ein Klick. Danach kann Claude Flows für dich anlegen, ein- und ausschalten, statt dass du alles von Hand klickst.", links: [["Klaviyo verbinden", WINDSOR]] }
+  ]},
+  { group: "Fundament bauen", items: [
+    { id: "domain", t: "Eigene Absender-Domain einrichten", p: "Du versendest von einer GMX-Adresse. Gmail und GMX stufen das als Spam ein. Richte in Klaviyo eine Sende-Domain wie „mail.gummivital.de“ ein und trage die angezeigten DNS-Einträge bei deinem Domain-Anbieter ein. Pfad: Einstellungen → Domains.", links: [["Klaviyo: Domains", KL + "/settings/domains"]] },
+    { id: "sender", t: "Absender auf hallo@gummivital.de umstellen", p: "Erst nach der Domain. Im Konto und in jeder Flow-Mail als Absender eintragen, Name „GummiVital“.", links: [["Konto-Einstellungen", KL + "/settings/account"]] },
+    { id: "tz", t: "Zeitzone auf Europe/Berlin stellen", p: "Steht auf US/Eastern. Sonst gehen Mails und Zeitfenster sechs Stunden versetzt raus.", links: [["Konto-Einstellungen", KL + "/settings/account"]] },
+    { id: "tracking", t: "Shop-Tracking reparieren", p: "Seit Mai kam kein einziges „Viewed Product“-Ereignis an, obwohl es Bestellungen gab. Prüfe im Theme-Editor unter App-Einbettungen, dass „Klaviyo Onsite“ aktiv ist, und schalte in Klaviyo bei der Shopify-Integration Onsite-Tracking und „Added to Cart“ ein.", links: [["Shopify: App-Einbettungen", SHOP + "/themes/current/editor?context=apps"], ["Klaviyo: Integrationen", KL + "/integrations"]] },
+    { id: "popup", t: "Anmelde-Popup bauen", p: "Neues Formular → Liste „Feierabend Newsletter“ (habe ich angelegt). Empfehlung: Handy nach 8 Sekunden oder bei 40 % Scroll, Desktop bei Exit-Intent, Angebot 10 % mit FEIERABEND10, nicht auf Checkout- und Danke-Seiten.", links: [["Klaviyo: Formulare", KL + "/forms"], ["Liste „Feierabend Newsletter“", KL + "/lists/XpSqCi"]] },
+    { id: "fk-flows", t: "Die 5 Feierabend-Flows anlegen", who: "oder Claude nach Windsor", p: "Templates liegen fertig in Klaviyo (Suche „FK |“). Trigger, Filter, Wartezeiten und Betreffzeilen stehen in der Anleitung. Welcome-Trigger: Liste „Feierabend Newsletter“.", links: [["Anleitung SETUP.md", SETUP], ["Klaviyo: Flows", KL + "/flows"]] },
+    { id: "coupon", t: "FEIERABEND10 mit Ablauf versehen", p: "Der Code läuft nie ab. Damit „Dein Code läuft bald ab“ in Welcome-Mail 5 stimmt: Ablaufdatum setzen oder in Klaviyo einmalige Codes mit 7 Tagen Gültigkeit nutzen.", links: [["Shopify: Rabattcode", SHOP + "/discounts/1955805593926"], ["Klaviyo: Gutscheine", KL + "/coupons"]] }
+  ]},
+  { group: "Vor dem Neustart der Ads", items: [
+    { id: "test", t: "Testdurchlauf mit eigener E-Mail", p: "Melde dich mit einer zweiten Adresse über das Popup an, leg etwas in den Warenkorb, brich an der Kasse ab. Prüfe, dass genau eine Mail pro Flow ankommt, im Posteingang und nicht im Spam.", links: [["Klaviyo: Flows", KL + "/flows"]] },
+    { id: "reviews", t: "Echte Bewertungen sammeln", p: "Bewertungsanfrage in Judge.me aktivieren, z. B. 14 Tage nach Zustellung. Echte Stimmen ersetzen dann die Zitate in den Mails.", links: [["Judge.me öffnen", SHOP + "/apps/judgeme"]] },
+    { id: "bf-flow", t: "Black-Friday-Warteliste fertigstellen", p: "Der Flow für die BF26-Warteliste ist noch Entwurf. Kampagnen und Warteliste baut Claude im Feierabend-Design, sobald du sagst, welches Angebot es gibt.", links: [["BF-Wartelisten-Flow", KL + "/flow/RcPLn4/edit"]] },
+    { id: "postpurchase", t: "Nach-dem-Kauf-Flow für Feierabend", who: "baut Claude", p: "Anleitung zur Einnahme, Erinnerung zum Nachkauf nach ca. 25 Tagen und Bewertungsbitte. Das ist der Flow, der Wiederkäufer macht." }
+  ]}
+];
+
+const state = { live: null, done: {}, db: null, mcp: null, loading: false };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (x) => (x == null || isNaN(x)) ? "–" : (Math.round(x * 1000) / 10).toString().replace(".", ",") + " %";
+const eur = (x) => (x || 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+
+function benchmark(name) {
+  const n = name.toLowerCase();
+  if (n.includes("welcome") || n.includes("willkommen")) return { open: .45, click: .08 };
+  if (n.includes("cart") || n.includes("checkout") || n.includes("warenkorb")) return { open: .40, click: .10 };
+  if (n.includes("browse") || n.includes("site")) return { open: .35, click: .05 };
+  if (n.includes("winback")) return { open: .20, click: .03 };
+  return { open: .35, click: .05 };
+}
+
+/* ---------- rendering ---------- */
+function buildChecks(d) {
+  const c = [];
+  if (d.duplicates.length) {
+    c.push({ sev: "bad", t: "Doppelte Flows senden mehrfach", p: d.duplicates.map((g) => `${esc(g.key)}: ${g.flows.length} Flows (${g.flows.map(esc).join(", ")})`).join("<br>"), fix: "Aufgaben 1–3 unten" });
+  } else c.push({ sev: "good", t: "Keine doppelten Trigger", p: "Jeder Auslöser startet nur einen Flow." });
+  if (FREEMAIL.test(d.sender || "")) c.push({ sev: "bad", t: "Absender ist eine Freemail-Adresse", p: `Versendet wird als ${esc(d.sender)}. Viele Postfächer filtern das als Spam.`, fix: "Aufgaben „Absender-Domain“ und „Absender umstellen“" });
+  else c.push({ sev: "good", t: "Eigene Absender-Adresse", p: esc(d.sender || "") });
+  if (!d.viewed30) c.push({ sev: "bad", t: "Kein Produkt-Tracking", p: "Keine „Viewed Product“-Ereignisse in den letzten 30 Tagen. Browse-Flows können nicht auslösen.", fix: "Aufgabe „Shop-Tracking reparieren“" });
+  else c.push({ sev: "good", t: "Produkt-Tracking läuft", p: `${d.viewed30} Produktansichten in 30 Tagen.` });
+  if (!d.addedToCartMetric) c.push({ sev: "warn", t: "„Added to Cart“ wird nicht erfasst", p: "Ohne dieses Ereignis läuft der Warenkorb-Flow nicht. Der Checkout-Flow funktioniert trotzdem." });
+  if (d.timezone && d.timezone !== "Europe/Berlin") c.push({ sev: "warn", t: "Falsche Zeitzone", p: `Konto steht auf ${esc(d.timezone)}.` });
+  if (!d.feierabendFlows) c.push({ sev: "warn", t: "Feierabend-Flows fehlen noch", p: "Die 15 Templates liegen bereit, die Flows selbst sind noch nicht angelegt." });
+  else c.push({ sev: "good", t: "Feierabend-Flows angelegt", p: `${d.feierabendFlows} Flows gefunden.` });
+  if (d.bounceRate != null && d.bounceRate > .02) c.push({ sev: "bad", t: "Hohe Bounce-Rate", p: `${pct(d.bounceRate)} der Flow-Mails kamen nicht an (Ziel unter 2 %). Ungültige Adressen bereinigen, Double-Opt-in beibehalten.` });
+  const subs = d.subs30 || 0;
+  c.push(subs ? { sev: "good", t: "Liste wächst", p: `${subs} neue Abonnenten in 30 Tagen.` } : { sev: "warn", t: "Keine neuen Abonnenten", p: "Normal, solange keine Ads laufen. Vor dem Neustart muss das Popup stehen." });
+  const order = { bad: 0, warn: 1, good: 2 };
+  return c.sort((a, b) => order[a.sev] - order[b.sev]);
+}
+
+function render(d) {
+  const checks = buildChecks(d);
+  const pills = { bad: "Kritisch", warn: "Prüfen", good: "OK" };
+  $("checks").innerHTML = checks.map((c) => `<li class="check sev-${c.sev}"><span class="stripe"></span><div><div class="check-title">${c.t}<span class="pill">${pills[c.sev]}</span></div><p>${c.p}</p>${c.fix ? `<div class="fix">→ ${esc(c.fix)}</div>` : ""}</div></li>`).join("");
+  const bad = checks.filter((c) => c.sev === "bad").length, warn = checks.filter((c) => c.sev === "warn").length;
+  $("health-note").textContent = `${bad} kritisch · ${warn} zu prüfen`;
+
+  const total = d.lists.reduce((s, l) => s + (l.count || 0), 0);
+  const recips = d.flows.reduce((s, f) => s + (f.recipients || 0), 0);
+  const flowRev = d.flows.reduce((s, f) => s + (f.revenue || 0), 0);
+  $("tiles").innerHTML = [
+    ["Kontakte in Listen", total.toLocaleString("de-DE"), d.lists.map((l) => `${l.name}: ${l.count}`).join(" · ")],
+    ["Neue Abonnenten", (d.subs30 || 0).toLocaleString("de-DE"), "letzte 30 Tage"],
+    ["Bestellungen", (d.orders30.count || 0).toLocaleString("de-DE"), eur(d.orders30.value) + " · 30 Tage"],
+    ["Flow-Empfänger", recips.toLocaleString("de-DE"), "90 Tage · " + eur(flowRev) + " Umsatz"]
+  ].map(([k, v, s]) => `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="d">${esc(s)}</div></div>`).join("");
+
+  renderChart(d.growth);
+  $("growth-note").textContent = "pro " + d.growth.unit;
+
+  const rows = d.flows.slice().sort((a, b) => (b.recipients || 0) - (a.recipients || 0));
+  $("flows").innerHTML = `<thead><tr><th>Flow</th><th class="num">Empfänger</th><th class="num">Öffnung</th><th class="num">Klick</th><th class="num">Conversion</th><th class="num">€ / Empf.</th></tr></thead><tbody>` +
+    (rows.length ? rows.map((f) => {
+      const b = benchmark(f.name), enough = (f.recipients || 0) >= 1;
+      const cls = (v, ref) => !enough ? "" : (v >= ref ? "good" : "bad");
+      return `<tr><td><div class="fname">${esc(f.name)}</div></td><td class="num">${f.recipients || 0}</td><td class="num metric ${cls(f.open, b.open)}">${pct(f.open)}</td><td class="num metric ${cls(f.click, b.click)}">${pct(f.click)}</td><td class="num">${pct(f.conv)}</td><td class="num">${eur(f.rpr)}</td></tr>`;
+    }).join("") : `<tr><td colspan="6" class="note">In den letzten 90 Tagen hat kein Flow gesendet.</td></tr>`) + "</tbody>";
+  $("flows-note").textContent = rows.length + " Flows mit Versand";
+}
+
+function renderChart(g) {
+  const W = 640, H = 180, pad = { l: 28, r: 8, t: 12, b: 26 };
+  const max = Math.max(4, ...g.values);
+  const step = Math.ceil(max / 4);
+  const top = step * 4;
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const bw = iw / g.values.length;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Neue Abonnenten pro ${esc(g.unit)}">`;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + ih - (ih * i) / 4;
+    s += `<line class="grid" x1="${pad.l}" x2="${W - pad.r}" y1="${y}" y2="${y}"/><text x="${pad.l - 6}" y="${y + 4}" text-anchor="end">${step * i}</text>`;
+  }
+  g.values.forEach((v, i) => {
+    const h = (ih * v) / top, x = pad.l + i * bw + bw * .18, w = bw * .64, y = pad.t + ih - h;
+    s += `<rect class="bar${i === g.values.length - 1 ? " last" : ""}" x="${x}" y="${y}" width="${w}" height="${Math.max(h, v ? 2 : 0)}" rx="3"><title>${esc(g.labels[i])}: ${v}</title></rect>`;
+    if (v) s += `<text x="${x + w / 2}" y="${y - 4}" text-anchor="middle">${v}</text>`;
+    s += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle">${esc(g.labels[i])}</text>`;
+  });
+  $("chart").innerHTML = s + "</svg>";
+}
+
+function renderTasks() {
+  const all = TASKS.flatMap((g) => g.items);
+  const done = all.filter((t) => state.done[t.id]).length;
+  $("bar").style.width = (100 * done / all.length) + "%";
+  $("tasks-note").textContent = `${done} von ${all.length} erledigt` + (state.db ? "" : " · Haken werden hier nicht gespeichert");
+  $("tasks").innerHTML = TASKS.map((g) => `<div class="group"><h3>${esc(g.group)}</h3>` + g.items.map((t) => {
+    const isDone = !!state.done[t.id];
+    const links = (t.links || []).map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join("");
+    return `<div class="task${isDone ? " done" : ""}"><input type="checkbox" id="task-${t.id}" data-id="${t.id}" ${isDone ? "checked" : ""} ${state.db ? "" : "disabled"} aria-label="${esc(t.t)} erledigt"><div><label class="t" for="task-${t.id}">${esc(t.t)}</label>${t.who ? `<span class="who">${esc(t.who)}</span>` : ""}<p>${esc(t.p)}</p>${links ? `<div class="links">${links}</div>` : ""}</div></div>`;
+  }).join("") + "</div>").join("");
+}
+
+$("tasks").addEventListener("change", async (e) => {
+  const id = e.target && e.target.dataset && e.target.dataset.id;
+  if (!id || !state.db) return;
+  const val = e.target.checked;
+  state.done[id] = val; renderTasks();
+  try { await state.db.doc("tasks/" + id).set({ done: val, at: new Date().toISOString() }); }
+  catch (err) { state.done[id] = !val; renderTasks(); $("tasks-note").textContent = "Speichern fehlgeschlagen. Bitte erneut versuchen."; }
+});
+
+/* ---------- live data ---------- */
+function unwrap(r) {
+  let p = r && r.payload;
+  if (typeof p === "string") { try { p = JSON.parse(p); } catch (_) { /* keep text */ } }
+  return p && p.result ? p.result : p;
+}
+async function k(tool, input, force) {
+  const r = await state.mcp.callTool(K, tool, Object.assign({ model: MODEL }, input), { cache: { staleTime: 15 * 60000, gcTime: 24 * 3600000, refresh: !!force } });
+  return unwrap(r);
+}
+function isoDay(d) { return d.toISOString().slice(0, 19); }
+function errText(e) {
+  const c = e && e.code;
+  if (c === "needs_reauth") return "Klaviyo-Verbindung abgelaufen. Verbinde Klaviyo neu unter claude.ai → Einstellungen → Connectors.";
+  if (c === "server_not_connected" || c === "selection_required") return "Klaviyo ist für dich nicht verbunden. Füge es unter claude.ai → Einstellungen → Connectors hinzu.";
+  if (c === "not_in_manifest" || c === "approval_required") return "Du hast diesem Cockpit den Klaviyo-Zugriff noch nicht erlaubt. Tippe auf „Live aktualisieren“ und erlaube den Zugriff.";
+  if (c === "server_unavailable" || c === "upstream_error") return "Klaviyo antwortet gerade nicht. Versuch es in ein paar Minuten noch einmal.";
+  return "Live-Daten konnten nicht geladen werden (" + esc(c || "Fehler") + ").";
+}
+
+async function loadLive(force) {
+  if (!state.mcp || state.loading) return;
+  state.loading = true; $("refresh").disabled = true; $("mode-text").textContent = "Lädt …";
+  const d = JSON.parse(JSON.stringify(SNAPSHOT));
+  const problems = [];
+  const now = new Date(), d30 = new Date(now - 30 * 864e5), d90 = new Date(now - 84 * 864e5);
+  try {
+    const [flowsRes, acct, metricsRes, listsRes] = await Promise.all([
+      k("get_flows", { fields_flow: ["name", "status", "trigger_type"] }, force),
+      k("get_account_details", { fields_account: ["contact_information.default_sender_email", "timezone"] }, force),
+      k("get_metrics", { fields_metric: ["name"] }, force),
+      k("get_lists", { fields_list: ["name"] }, force)
+    ]);
+    const a = acct && acct.data && acct.data[0] && acct.data[0].attributes;
+    if (a) { d.sender = a.contact_information && a.contact_information.default_sender_email; d.timezone = a.timezone; }
+
+    const metricId = {};
+    ((metricsRes && metricsRes.data) || []).forEach((m) => { const n = m.attributes.name; if (!metricId[n]) metricId[n] = m.id; });
+    d.addedToCartMetric = !!metricId["Added to Cart"];
+
+    const flows = (flowsRes && flowsRes.data) || [];
+    const live = flows.filter((f) => f.attributes.status === "live");
+    d.feierabendFlows = flows.filter((f) => /^FK |feierabend/i.test(f.attributes.name)).length;
+    const defs = await Promise.all(live.map((f) => k("get_flow", { id: f.id, additional_fields_flow: ["definition"], fields_flow: ["name", "definition.triggers"] }, force).catch(() => null)));
+    const groups = {};
+    const nameOf = (t) => {
+      if (t.type === "list") { const l = ((listsRes && listsRes.data) || []).find((x) => x.id === t.id); return "Liste „" + (l ? l.attributes.name : t.id) + "“"; }
+      const m = Object.keys(metricId).find((n) => metricId[n] === t.id); return m || t.id;
+    };
+    defs.forEach((r, i) => {
+      const trig = r && r.data && r.data.attributes.definition && r.data.attributes.definition.triggers;
+      (trig || []).forEach((t) => { if (t.trigger_filter) return; const key = nameOf(t); (groups[key] = groups[key] || []).push(live[i].attributes.name); });
+    });
+    d.duplicates = Object.keys(groups).filter((k2) => groups[k2].length > 1).map((k2) => ({ key: k2, flows: groups[k2] }));
+
+    const lists = (listsRes && listsRes.data) || [];
+    const counts = await Promise.all(lists.filter((l) => !/preview/i.test(l.attributes.name)).map((l) => k("get_list", { id: l.id, additional_fields_list: ["profile_count"], fields_list: ["name", "profile_count"] }, force).catch(() => null)));
+    d.lists = counts.filter(Boolean).map((r) => ({ name: r.data.attributes.name, count: r.data.attributes.profile_count || 0 }));
+
+    const agg = (metric, meas, from, interval) => metricId[metric] ? k("query_metric_aggregates", { body: { data: { type: "metric-aggregate", attributes: { metric_id: metricId[metric], measurements: meas, interval, timezone: "Europe/Berlin", filter: ["greater-or-equal(datetime," + isoDay(from) + ")", "less-than(datetime," + isoDay(now) + ")"] } } } }, force) : Promise.resolve(null);
+    const sumOf = (r, m) => { const row = r && r.data && r.data.attributes && r.data.attributes.data && r.data.attributes.data[0]; return row ? (row.measurements[m] || []).reduce((s, x) => s + x, 0) : 0; };
+    const [subsW, viewed, orders] = await Promise.all([
+      agg("Subscribed to Email Marketing", ["count"], d90, "week"),
+      agg("Viewed Product", ["count"], d30, "month"),
+      agg("Placed Order", ["count", "sum_value"], d30, "month")
+    ]);
+    if (subsW && subsW.data) {
+      const at = subsW.data.attributes, row = at.data[0];
+      const vals = row ? row.measurements.count : at.dates.map(() => 0);
+      d.growth = { unit: "Woche", labels: at.dates.map((x) => { const t = new Date(x); return t.getDate() + "." + (t.getMonth() + 1) + "."; }), values: vals };
+      const cut = d30.getTime();
+      d.subs30 = at.dates.reduce((s, x, i) => s + (new Date(x).getTime() >= cut ? (vals[i] || 0) : 0), 0);
+    }
+    d.viewed30 = sumOf(viewed, "count");
+    d.orders30 = { count: sumOf(orders, "count"), value: sumOf(orders, "sum_value") };
+
+    try {
+      const rep = await k("get_flow_report", { conversion_metric_id: metricId["Placed Order"], timeframe: { key: "last_90_days" }, statistics: ["recipients", "delivered", "bounced", "open_rate", "click_rate", "conversion_rate"], value_statistics: ["conversion_value", "revenue_per_recipient"] }, force);
+      const fa = (rep && rep.data && rep.data.attributes && rep.data.attributes.flow_aggregation) || [];
+      d.flows = fa.map((x) => ({ name: x.flow_details.attributes.name, recipients: x.statistics.recipients, open: x.statistics.open_rate, click: x.statistics.click_rate, conv: x.statistics.conversion_rate, rpr: x.statistics.revenue_per_recipient, revenue: x.statistics.conversion_value, bounced: x.statistics.bounced || 0 }));
+      const rc = d.flows.reduce((s, f) => s + (f.recipients || 0), 0), bc = d.flows.reduce((s, f) => s + (f.bounced || 0), 0);
+      d.bounceRate = rc ? bc / rc : null;
+    } catch (e) { problems.push("Flow-Bericht: " + errText(e)); }
+
+    state.live = d;
+    render(d);
+    $("mode").classList.add("live");
+    $("mode-text").textContent = "Live · " + now.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    $("growth-hint").hidden = d.subs30 > 0;
+    if (problems.length) $("flows-note").textContent = problems.join(" ");
+  } catch (e) {
+    $("mode-text").textContent = "Stand " + SNAPSHOT.asOf;
+    $("health-note").innerHTML = `<span class="err">${errText(e)}</span>`;
+  } finally {
+    state.loading = false; $("refresh").disabled = false;
+  }
+}
+$("refresh").addEventListener("click", () => loadLive(true));
+
+/* ---------- boot ---------- */
+render(SNAPSHOT);
+renderTasks();
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  const [mcp, db] = await Promise.all([window.claude.use("mcp").catch(() => null), window.claude.use("db").catch(() => null)]);
+  if (db) {
+    state.db = db;
+    const timer = setTimeout(() => { $("tasks-note").textContent += " · Speicher noch nicht erreichbar"; }, 10000);
+    db.collection("tasks").onSnapshot((snap) => {
+      clearTimeout(timer);
+      const next = {};
+      snap.docs.forEach((doc) => { const v = doc.data(); if (v && v.done) next[doc.id] = true; });
+      state.done = next; renderTasks();
+    }, () => { clearTimeout(timer); renderTasks(); });
+    renderTasks();
+  }
+  if (mcp) { state.mcp = mcp; $("refresh").disabled = false; loadLive(false); }
+  else { $("subline").textContent = "Zeigt den Stand vom " + SNAPSHOT.asOf + ". Live-Daten erscheinen, wenn du das Cockpit in Claude mit verbundenem Klaviyo öffnest."; }
+})();
+</script>
+</body>
+</html>
