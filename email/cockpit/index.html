@@ -174,12 +174,8 @@ const SNAPSHOT = {
   subs30: 0,
   orders30: { count: 1, value: 29.99 },
   growth: { unit: "Monat", labels: ["Mai", "Jun", "Jul", "Aug", "Sep", "Okt"], values: [0, 0, 0, 1, 2, 0] },
-  duplicates: [
-    { key: "Liste „Newsletter“", flows: ["Welcome-Serie - Kunde vs. Nicht-Kunde", "Welcome-Serie … neues produkt", "Welcome-Serie … (Klon) neues produkt"] },
-    { key: "Viewed Product", flows: ["Browse Abandonment - Standard", "Browse Abandonment - Standard neues produkt", "Browse Abandonment -neues produkt"] },
-    { key: "Checkout Started", flows: ["Abandoned Cart Reminder (Email)", "Abandoned Cart Reminder (Email) neues produkt"] }
-  ],
-  feierabendFlows: 0,
+  duplicates: [],
+  feierabendFlows: 9,
   bounceRate: 0.17,
   flows: [
     { name: "Customer Winback", recipients: 6, open: .1667, click: .1667, conv: 0, rpr: 0 },
@@ -197,6 +193,7 @@ const TASKS = [
     { id: "dup-browse", t: "Doppelte Browse-Flows ausschalten", p: "Drei Browse-Flows reagieren auf dasselbe Ereignis. Behalte „Browse Abandonment - Standard“ für Shilajit und stelle die zwei Kopien auf „Entwurf“.", links: [["Browse … Standard neues produkt", KL + "/flow/YmqiJh/edit"], ["Browse … -neues produkt", KL + "/flow/XBFZzP/edit"]] },
     { id: "dup-cart", t: "Doppelten Checkout-Flow ausschalten", p: "Die Kopie enthält die alten Shilajit-Mails. Der neue Feierabend-Checkout-Flow ersetzt sie.", links: [["Abandoned Cart … neues produkt", KL + "/flow/XJVgaB/edit"]] },
     { id: "filter-old", t: "Shilajit-Flows auf Shilajit begrenzen", p: "Trigger-Filter setzen, damit Feierabend-Käufer keine Shilajit-Mails bekommen. Checkout: „Item Names doesn’t contain FEIERABEND“. Browse: „ProductName doesn’t contain FEIERABEND“.", links: [["Checkout-Flow (Shilajit)", KL + "/flow/XxHyMC/edit"], ["Browse-Flow (Shilajit)", KL + "/flow/RpawXV/edit"]] },
+    { id: "filter-thanks", t: "Shilajit-Nachkauf-Flows auf Shilajit begrenzen", p: "„Dankesnachricht“, „Nachverfolgung nach dem Kauf“ und „Customer Winback“ laufen bei jeder Bestellung, also auch bei Feierabend-Käufern, die sonst Shilajit-Mails bekommen. Trigger-Filter setzen: „Item Names doesn’t contain“ + Feierabend-Produkttitel.", links: [["Dankesnachricht", KL + "/flow/X8xRL8/edit"], ["Nachverfolgung", KL + "/flow/QRbFmS/edit"], ["Customer Winback", KL + "/flow/R5ACNn/edit"]] },
     { id: "windsor", t: "Klaviyo mit Windsor verbinden", who: "macht danach Claude", p: "Ein Klick. Danach kann Claude Flows für dich anlegen, ein- und ausschalten, statt dass du alles von Hand klickst.", links: [["Klaviyo verbinden", WINDSOR]] }
   ]},
   { group: "Fundament bauen", items: [
@@ -212,7 +209,8 @@ const TASKS = [
     { id: "test", t: "Testdurchlauf mit eigener E-Mail", p: "Melde dich mit einer zweiten Adresse über das Popup an, leg etwas in den Warenkorb, brich an der Kasse ab. Prüfe, dass genau eine Mail pro Flow ankommt, im Posteingang und nicht im Spam.", links: [["Klaviyo: Flows", KL + "/flows"]] },
     { id: "reviews", t: "Echte Bewertungen sammeln", p: "Bewertungsanfrage in Judge.me aktivieren, z. B. 14 Tage nach Zustellung. Echte Stimmen ersetzen dann die Zitate in den Mails.", links: [["Judge.me öffnen", SHOP + "/apps/judgeme"]] },
     { id: "bf-flow", t: "Black-Friday-Warteliste fertigstellen", p: "Der Flow für die BF26-Warteliste ist noch Entwurf. Kampagnen und Warteliste baut Claude im Feierabend-Design, sobald du sagst, welches Angebot es gibt.", links: [["BF-Wartelisten-Flow", KL + "/flow/RcPLn4/edit"]] },
-    { id: "postpurchase", t: "Nach-dem-Kauf-Flow für Feierabend", who: "baut Claude", p: "Anleitung zur Einnahme, Erinnerung zum Nachkauf nach ca. 25 Tagen und Bewertungsbitte. Das ist der Flow, der Wiederkäufer macht." }
+    { id: "postpurchase", t: "Nach-dem-Kauf-, Nachkauf- und Winback-Flows", who: "von Claude angelegt", p: "Danke + Einnahme (sofort), Ritual-Tipps (Tag 6), Bewertung (Tag 14), Nachkauf für 1 Dose (Tag 22 + 27), für 2+1 (Tag 80), für 3+2 (Tag 140), Winback (Tag 60). Alle als Entwurf.", links: [["Klaviyo: Flows", KL + "/flows"]] },
+    { id: "golive", t: "Feierabend-Flows live schalten", who: "macht Claude auf Zuruf", p: "Wenn Tracking, Popup und Domain stehen: Sag Claude Bescheid, dann gehen alle 9 FK-Flows in einem Schritt live (Welcome, Checkout, Browse, Site, Nach dem Kauf, 3× Nachkauf, Winback)." }
   ]}
 ];
 
@@ -235,7 +233,7 @@ function benchmark(name) {
 function buildChecks(d) {
   const c = [];
   if (d.duplicates.length) {
-    c.push({ sev: "bad", t: "Doppelte Flows senden mehrfach", p: d.duplicates.map((g) => `${esc(g.key)}: ${g.flows.length} Flows (${g.flows.map(esc).join(", ")})`).join("<br>"), fix: "Aufgaben 1–3 unten" });
+    c.push({ sev: "bad", t: "Doppelte Flows senden mehrfach", p: d.duplicates.map((g) => `${esc(g.key)}: ${g.flows.length} Flows (${g.flows.map(esc).join(", ")})`).join("<br>"), fix: "Aufgaben unter „Sofort aufräumen“" });
   } else c.push({ sev: "good", t: "Keine doppelten Trigger", p: "Jeder Auslöser startet nur einen Flow." });
   if (FREEMAIL.test(d.sender || "")) c.push({ sev: "bad", t: "Absender ist eine Freemail-Adresse", p: `Versendet wird als ${esc(d.sender)}. Viele Postfächer filtern das als Spam.`, fix: "Aufgaben „Absender-Domain“ und „Absender umstellen“" });
   else c.push({ sev: "good", t: "Eigene Absender-Adresse", p: esc(d.sender || "") });
@@ -244,7 +242,7 @@ function buildChecks(d) {
   if (!d.addedToCartMetric) c.push({ sev: "warn", t: "„Added to Cart“ wird nicht erfasst", p: "Ohne dieses Ereignis läuft der Warenkorb-Flow nicht. Der Checkout-Flow funktioniert trotzdem." });
   if (d.timezone && d.timezone !== "Europe/Berlin") c.push({ sev: "warn", t: "Falsche Zeitzone", p: `Konto steht auf ${esc(d.timezone)}.` });
   if (!d.feierabendFlows) c.push({ sev: "warn", t: "Feierabend-Flows fehlen noch", p: "Die 15 Templates liegen bereit, die Flows selbst sind noch nicht angelegt." });
-  else c.push({ sev: "good", t: "Feierabend-Flows angelegt", p: `${d.feierabendFlows} Flows gefunden.` });
+  else c.push({ sev: "good", t: "Feierabend-Flows angelegt", p: `${d.feierabendFlows} Flows gefunden (Entwurf, gehen beim Neustart live).` });
   if (d.bounceRate != null && d.bounceRate > .02) c.push({ sev: "bad", t: "Hohe Bounce-Rate", p: `${pct(d.bounceRate)} der Flow-Mails kamen nicht an (Ziel unter 2 %). Ungültige Adressen bereinigen, Double-Opt-in beibehalten.` });
   const subs = d.subs30 || 0;
   c.push(subs ? { sev: "good", t: "Liste wächst", p: `${subs} neue Abonnenten in 30 Tagen.` } : { sev: "warn", t: "Keine neuen Abonnenten", p: "Normal, solange keine Ads laufen. Vor dem Neustart muss das Popup stehen." });

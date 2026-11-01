@@ -82,3 +82,18 @@ Flow-Filter: *Viewed Product zero times since starting this flow* + *Placed Orde
 Auf Entwurf gestellt (Duplikate): TDjbsn, VKGRLF, YmqiJh, XBFZzP, XJVgaB.
 Warenkorb-Flow fehlt noch, bis „Added to Cart“ in Klaviyo erfasst wird.
 Achtung: Wird der Produkttitel in Shopify geändert, muss der Checkout-Filter angepasst werden.
+
+## Nach dem Kauf, Nachkauf & Winback (01.11.2026, alle Entwurf)
+
+Alle hängen an „Placed Order“ mit Filter auf den Feierabend-Produkttitel. Die Paketgröße wird über den Bestellwert erkannt.
+
+| Flow | Klaviyo-ID | Filter | Mails |
+|---|---|---|---|
+| FK \| Nach dem Kauf | VKnLH4 | jede Feierabend-Bestellung | sofort Danke + Einnahme (TbJQ2V) · Tag 6 Ritual-Tipps (RTsuBH) · Tag 14 Bewertung (Rw5WZP) |
+| FK \| Nachkauf – 1 Dose | WSLBsp | Bestellwert < 40 € | Tag 22 „noch 8 Abende“ (XwJEaN) · Tag 27 „letzte Abende“ (YjXtxu) |
+| FK \| Nachkauf – Paket 2+1 | UE8G7G | 40–70 € | Tag 80 „Vorrat geht zur Neige“ (XAEarR) |
+| FK \| Nachkauf – Paket 3+2 | VMwwR3 | ≥ 70 € | Tag 140 „Vorrat geht zur Neige“ (XAEarR) |
+| FK \| Winback – 1 Dose | UxmVzN | < 40 € | Tag 60 „Dein Feierabend vermisst dich“ (SAw3sk) |
+
+Alle Nachkauf- und Winback-Flows stoppen automatisch, sobald der Kunde erneut bestellt.
+Wenn sich Preise oder Pakete ändern, müssen die 40/70-€-Grenzen angepasst werden.

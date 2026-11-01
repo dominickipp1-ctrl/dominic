@@ -304,7 +304,7 @@ def timeline():
                cls="dark p", style=f"background:{NAVY};padding:6px 30px 40px")
 
 
-def bundles(href=PDP, title="Wähle dein Paket", sub="Je mehr Abende, desto mehr sparst du."):
+def bundles(href=PDP, title="Wähle dein Paket", sub="Je mehr Abende, desto mehr sparst du.", eyebrow="Herbst-Aktion", cta="Paket auswählen"):
     offers = [
         ("1 Dose", "30 Abende", "29,99 €", "≈ 1,00 € pro Abend", "", False),
         ("2 Dosen + 1 gratis", "90 Abende · + 14-Tage-Reset-Guide gratis", "59,98 €", "≈ 0,67 € pro Abend",
@@ -331,11 +331,11 @@ def bundles(href=PDP, title="Wähle dein Paket", sub="Je mehr Abende, desto mehr
             f'<p class="f" style="margin:3px 0 0;font-size:12px;font-weight:700;color:{GOLD}">{per}</p></td></tr>'
             f"</table></a></td></tr>"
         )
-    head = text_block("Herbst-Aktion", title, "", f"<p class='t'>{sub}</p>", pad="44px 40px 22px",
+    head = text_block(eyebrow, title, "", f"<p class='t'>{sub}</p>", pad="44px 40px 22px",
                       h_cls="h2")
     return head + row(
         f'<table role="presentation" width="100%">{cards}</table>'
-        f'<div style="margin-top:14px">{button("Paket auswählen", href)}</div>'
+        f'<div style="margin-top:14px">{button(cta, href)}</div>'
         f'<p class="s f" style="text-align:center;margin-top:14px">Kein Abo · einmaliger Kauf · Gratis-Versand</p>',
         cls="p", style="padding:0 40px 44px",
     )
@@ -436,7 +436,7 @@ def cart_table():
     )
 
 
-def footer():
+def footer(reason="du dich bei GummiVital angemeldet oder unseren Shop besucht hast"):
     links = " &nbsp;·&nbsp; ".join(
         f'<a href="{u}" style="color:#C9D0DA;text-decoration:none">{l}</a>'
         for l, u in [("Shop", PDP), ("FAQ", SHOP + "/pages/faq"), ("Kontakt", SHOP + "/pages/contact")]
@@ -451,7 +451,7 @@ def footer():
         f"aufbewahren. Nicht geeignet für Schwangere, Stillende, Kinder und Jugendliche. Kann bei übermäßigem Verzehr abführend wirken.</p>"
         f'<p class="f" style="margin:16px 0 0;font-size:11px;line-height:17px;color:#9AA5B5">'
         f"{{{{ organization.name }}}} · {{{{ organization.full_address }}}}<br>"
-        f"Du erhältst diese E-Mail, weil du dich bei GummiVital angemeldet oder unseren Shop besucht hast.<br>"
+        f"Du erhältst diese E-Mail, weil {reason}.<br>"
         f"<span style=\"color:#C9D0DA\">{{% unsubscribe 'Abmelden' %}}</span> &nbsp;·&nbsp; "
         f"<span style=\"color:#C9D0DA\">{{% web_view 'Im Browser ansehen' %}}</span></p>",
         style=f"background:{NAVY};padding:40px 40px 44px;text-align:center",
@@ -465,7 +465,6 @@ def page(title, preheader, rows):
     return minify(f"""<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting">
 <title>{title}</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>{CSS}</style></head><body>{pre}
 <table role="presentation" width="100%" style="background:{CREAM}"><tr><td align="center" style="padding:0">
 <table role="presentation" class="w" width="600" style="width:600px;background:#ffffff">{body}</table>
@@ -740,6 +739,176 @@ email("site-2", "Site Abandonment", "FK | Site 2/2 – Pakete + Garantie", "+1 T
        review(*R_TIM, bg="#ffffff"),
        bundles(),
        guarantee(), trust_bar(), footer()])
+
+
+# ============ POST-PURCHASE + NACHKAUF ============
+REVIEW_URL = PDP + "#judgeme_product_reviews"
+HELLO = "{{ first_name|default:'du' }}"
+BUYER = "du bei GummiVital bestellt hast"
+
+
+def steps(items, bg="#ffffff"):
+    cells = "".join(
+        f'<td class="stk stk-pad" width="33%" style="padding:0 6px;vertical-align:top">'
+        f'<table role="presentation" width="100%" class="card"><tr><td style="padding:20px 16px;text-align:center">'
+        f'<div class="f" style="width:40px;height:40px;line-height:40px;border-radius:50%;background:{NAVY};color:{GOLD};'
+        f'font-size:16px;font-weight:800;margin:0 auto">{i + 1}</div>'
+        f'<p class="f" style="margin:12px 0 0;font-size:15px;font-weight:800;color:{NAVY}">{t}</p>'
+        f'<p class="s f" style="margin-top:6px;font-size:13px;line-height:19px">{d}</p></td></tr></table></td>'
+        for i, (t, d) in enumerate(items)
+    )
+    return row(f'<table role="presentation" width="100%"><tr>{cells}</tr></table>', cls="p",
+               style=f"background:{bg};padding:0 34px 34px")
+
+
+def supply_bar(day, total, label):
+    left = total - day
+    pct_used = int(100 * day / total)
+    return row(
+        f'<table role="presentation" width="100%" class="card"><tr><td style="padding:24px">'
+        f'<p class="eb f" style="margin:0 0 10px">Dein Vorrat</p>'
+        f'<p class="f" style="margin:0;font-size:22px;font-weight:800;color:{NAVY}">{label}</p>'
+        f'<table role="presentation" width="100%" style="margin-top:16px"><tr>'
+        f'<td width="{pct_used}%" style="height:12px;background:{GOLD};border-radius:999px 0 0 999px;font-size:1px;line-height:1px">&nbsp;</td>'
+        f'<td style="height:12px;background:{LINE};border-radius:0 999px 999px 0;font-size:1px;line-height:1px">&nbsp;</td></tr></table>'
+        f'<table role="presentation" width="100%" style="margin-top:8px"><tr>'
+        f'<td class="s f" style="font-size:12px">Abend {day}</td>'
+        f'<td class="s f" style="font-size:12px;text-align:right">noch ca. {left} Abende</td></tr></table>'
+        f'</td></tr></table>',
+        cls="p", style="padding:0 40px 30px",
+    )
+
+
+def stars_cta():
+    stars = "".join(
+        f'<td style="padding:0 4px"><a href="{REVIEW_URL}" style="text-decoration:none;font-size:34px;color:{GOLD}" '
+        f'aria-label="{n} Sterne">★</a></td>' for n in range(1, 6)
+    )
+    return row(
+        f'<table role="presentation" align="center" style="margin:0 auto"><tr>{stars}</tr></table>'
+        f'<p class="s f" style="text-align:center;margin-top:8px">Tippe auf die Sterne, um deine Bewertung zu schreiben.</p>'
+        f'<div style="margin-top:22px">{button("Bewertung schreiben", REVIEW_URL)}</div>',
+        cls="p", style="padding:0 40px 40px;text-align:center",
+    )
+
+
+FAQ_USE = [
+    ("Wann nehme ich die Gummies?", "Am besten jeden Abend zur gleichen Zeit, etwa 1–2 Stunden vor dem Schlafengehen. Zwei Gummies kauen, ohne Wasser."),
+    ("Was, wenn ich einen Abend vergesse?", "Kein Problem. Einfach am nächsten Abend wie gewohnt weitermachen, nicht doppelt nehmen."),
+    ("Kann ich mehr als zwei nehmen?", "Bitte nicht. Die empfohlene Verzehrmenge sind 2 Gummies pro Tag."),
+    ("Ich nehme Medikamente – ist das okay?", "Sprich vorher kurz mit deinem Arzt oder deiner Apotheke. Nicht geeignet für Schwangere, Stillende, Kinder und Jugendliche."),
+]
+
+email("pp-1", "Post-Purchase", "FK | Nach dem Kauf 1/3 – Danke + Einnahme", "sofort",
+      "Willkommen im Feierabend-Club 🌙",
+      "So holst du das Beste aus deinen ersten Abenden.",
+      [topbar("Danke für deine Bestellung"), logo(), image(IMG["pack"], "Feierabend-Komplex", pad="0 40px", radius="18px"),
+       text_block("Schön, dass du dabei bist", "Danke für dein Vertrauen.", "Dein Feierabend ist unterwegs.",
+                  "<p class='t'>Deine Bestellung ist bei uns eingegangen und geht in 1–3 Werktagen mit DHL raus. "
+                  "Die Versandbestätigung mit Sendungsnummer kommt separat.</p>"
+                  "<p class='t' style='margin-top:14px'>Damit dein neues Ritual vom ersten Abend an sitzt, hier die drei Dinge, "
+                  "auf die es ankommt:</p>", pad="40px 40px 28px"),
+       steps([("Feste Uhrzeit", "Jeden Abend zur gleichen Zeit, etwa 1–2 Stunden vor dem Schlafengehen."),
+              ("Zwei Gummies", "Kauen, genießen, fertig. Kein Wasser, keine Kapseln."),
+              ("Schlusspunkt setzen", "Danach Laptop zu, Handy weg. Das Ritual sagt deinem Tag: Ende.")]),
+       text_block("Beispiel-Abend", "Ein klarer Schlusspunkt", "für jeden Abend.", "", cls="dark", h_cls="h2",
+                  pad="44px 40px 30px"),
+       timeline(),
+       text_block("", "Gib dem Ritual Zeit.", "",
+                  "<p class='t'>Neue Routinen fühlen sich oft erst nach ein paar Wochen selbstverständlich an. "
+                  "Bleib dran, jeden Abend, auch am Wochenende. Wenn du nach 60 Tagen merkst, dass es nicht zu dir passt, "
+                  "bekommst du dein Geld zurück.</p>", h_cls="h2", pad="44px 40px 20px"),
+       faq(FAQ_USE),
+       guarantee(), B6_NOTE, trust_bar(), footer(BUYER)])
+
+email("pp-2", "Post-Purchase", "FK | Nach dem Kauf 2/3 – Ritual-Tipps", "+6 Tage",
+      "3 Gewohnheiten für einen echten Feierabend",
+      "Kleine Schritte, die dein Abendritual noch runder machen.",
+      [logo(), image(IMG["life1"], "Feierabend-Ritual", pad="0 40px", radius="18px"),
+       text_block("Dein Ritual", "Drei kleine Gewohnheiten,", "die viel ausmachen.",
+                  f"<p class='t'>Hey {HELLO}, deine ersten Abende mit dem Feierabend-Komplex liegen hinter dir. "
+                  "Diese drei Gewohnheiten passen perfekt dazu und kosten keine fünf Minuten:</p>", pad="40px 40px 26px"),
+       row("".join(
+           f'<table role="presentation" width="100%" class="card" style="margin-bottom:12px"><tr>'
+           f'<td class="f" width="54" style="padding:18px 0 18px 20px;font-size:22px;font-weight:800;color:{GOLD};vertical-align:top">{n}</td>'
+           f'<td style="padding:18px 20px 18px 6px"><p class="f" style="margin:0;font-size:16px;font-weight:800;color:{NAVY}">{t}</p>'
+           f'<p class="s f" style="margin-top:4px;font-size:14px;line-height:21px">{d}</p></td></tr></table>'
+           for n, t, d in [
+               ("01", "Morgen-Liste schreiben", "Notier dir die drei Dinge, die morgen anstehen. Was auf dem Papier steht, muss nicht mehr im Kopf kreisen."),
+               ("02", "Bildschirme aus, Licht runter", "30 Minuten vor dem Schlafengehen Handy weglegen und gedimmtes Licht statt Deckenlampe."),
+               ("03", "Gummies als Signal", "Nimm sie immer an derselben Stelle, zum Beispiel auf dem Sofa nach dem Abendessen. So wird daraus ein Ritual."),
+           ]), cls="p", style="padding:0 40px 30px"),
+       lifestyle_grid(["life2", "life4"]),
+       text_block("", "Du bist nicht allein.", "",
+                  "<p class='t'>Fragen zur Einnahme oder Feedback? Antworte einfach auf diese Mail, wir lesen jede Nachricht.</p>",
+                  h_cls="h2", pad="10px 40px 40px"),
+       trust_bar(), footer(BUYER)])
+
+email("pp-3", "Post-Purchase", "FK | Nach dem Kauf 3/3 – Bewertung", "+8 Tage",
+      "Wie gefällt dir dein Feierabend-Ritual?",
+      "Deine ehrliche Meinung hilft anderen bei der Entscheidung.",
+      [logo(), text_block("Deine Meinung zählt", f"Hey {HELLO}, wie läuft", "dein Feierabend?",
+                          "<p class='t'>Du hast den Feierabend-Komplex jetzt seit etwa zwei Wochen. Wir würden gern wissen, "
+                          "wie es dir damit geht – ehrlich, auch wenn noch nicht alles perfekt ist. "
+                          "Deine Bewertung hilft anderen, die gerade vor der gleichen Entscheidung stehen.</p>",
+                          pad="44px 40px 26px"),
+       stars_cta(),
+       split("life3", "Nicht ganz zufrieden?", "Sag es uns.", "Wir hören zu.",
+             "<p>Wenn etwas nicht passt – Geschmack, Einnahme, Versand – antworte einfach auf diese Mail. "
+             "Und denk dran: Du hast 60 Tage Geld-zurück-Garantie.</p>", bg=CREAM),
+       trust_bar(), footer(BUYER)])
+
+email("ro-1", "Nachkauf (1 Dose)", "FK | Nachkauf 1/2 – Noch 8 Abende", "22 Tage nach Kauf",
+      "Deine Dose reicht noch für ca. 8 Abende",
+      "Bestell rechtzeitig nach, damit dein Ritual nicht unterbricht.",
+      [logo(), text_block("Kurze Erinnerung", f"Hey {HELLO}, deine Dose", "ist bald leer.",
+                          "<p class='t'>Bei zwei Gummies pro Abend reicht eine Dose 30 Abende. Wenn du direkt nach der Lieferung "
+                          "gestartet bist, hast du jetzt noch ungefähr eine Woche. Bestell rechtzeitig nach, "
+                          "damit dein Ritual keine Pause macht – der Versand dauert 1–3 Werktage.</p>",
+                          pad="40px 40px 28px"),
+       supply_bar(22, 30, "Noch ca. 8 Abende"),
+       bundles(title="Gleich für die nächsten Monate?",
+               sub="Mit 2+1 hast du 90 Abende Ruhe vor dem Nachbestellen – für ≈ 0,67 € pro Abend.", eyebrow="Vorrats-Pakete", cta="Jetzt nachbestellen"),
+       guarantee(), trust_bar(), footer(BUYER)])
+
+email("ro-2", "Nachkauf (1 Dose)", "FK | Nachkauf 2/2 – Letzte Abende", "27 Tage nach Kauf",
+      "Nur noch ein paar Abende übrig",
+      "Damit dein Feierabend-Ritual keine Pause macht.",
+      [topbar("Kostenloser Versand · in 1–3 Werktagen bei dir"), logo(),
+       text_block("Fast leer", "Nur noch ein paar Abende.", "Dann ist die Dose leer.",
+                  "<p class='t'>Wenn du jetzt bestellst, ist die neue Dose da, bevor die alte leer ist. "
+                  "Routinen leben davon, dass sie nicht unterbrochen werden.</p>", pad="40px 40px 28px"),
+       supply_bar(27, 30, "Noch ca. 3 Abende"),
+       product_card(cta="Jetzt nachbestellen", price="ab 29,99 €"),
+       review(*R_CHRISTINA, bg="#ffffff"),
+       bundles(eyebrow="Vorrats-Pakete"), trust_bar(), footer(BUYER)])
+
+email("ro-3", "Nachkauf (Pakete)", "FK | Nachkauf Paket – Vorrat geht zur Neige", "80 / 140 Tage nach Kauf",
+      "Dein Feierabend-Vorrat geht bald zur Neige",
+      "Zeit, dein Ritual für die nächsten Monate zu sichern.",
+      [logo(), image(IMG["pack"], "Feierabend-Komplex", pad="30px 40px 0", radius="18px"),
+       text_block("Danke für deine Treue", f"Hey {HELLO}, deine Pakete", "neigen sich dem Ende.",
+                  "<p class='t'>Du hast dich für ein Vorratspaket entschieden – stark. Nach unserer Rechnung bist du jetzt "
+                  "in den letzten ein bis zwei Wochen. Bestell rechtzeitig nach, damit dein Ritual nahtlos weitergeht.</p>",
+                  pad="36px 40px 20px"),
+       stats([("2", "Gummies<br>pro Abend"), ("90", "Abende mit<br>2+1"), ("150", "Abende mit<br>3+2"), ("0 €", "Versand")]),
+       bundles(title="Dein nächster Vorrat", sub="Wieder mit Gratis-Dosen und ohne Abo.", eyebrow="Vorrats-Pakete", cta="Jetzt nachbestellen"),
+       guarantee(), trust_bar(), footer(BUYER)])
+
+email("wb-1", "Winback (1 Dose)", "FK | Winback – Lange nicht gesehen", "60 Tage nach Kauf",
+      "Dein Feierabend vermisst dich",
+      "Zeit für einen Neustart deines Abendrituals?",
+      [logo(), image(IMG["life6"], "Feierabend-Ritual"),
+       text_block("Lange nicht gesehen", f"Hey {HELLO}, wie sehen", "deine Abende gerade aus?",
+                  "<p class='t'>Vor ungefähr zwei Monaten hast du mit dem Feierabend-Komplex angefangen. Seitdem haben wir "
+                  "nichts mehr von dir gehört. Vielleicht ist das Ritual im Alltag untergegangen – das passiert. "
+                  "Der beste Zeitpunkt für einen Neustart ist heute Abend.</p>", pad="40px 40px 26px"),
+       steps([("Dose bestellen", "In 1–3 Werktagen bei dir, kostenloser Versand."),
+              ("Uhrzeit festlegen", "Immer gleich, etwa 1–2 Stunden vor dem Schlafengehen."),
+              ("Dranbleiben", "Jeden Abend, auch am Wochenende. So wird es zum Ritual.")]),
+       review(*R_TIM, bg="#ffffff"),
+       bundles(eyebrow="Neustart", title="Starte dein Ritual neu", sub="Kein Abo, 60 Tage Geld-zurück-Garantie.", cta="Jetzt neu starten"),
+       guarantee(), trust_bar(), footer(BUYER)])
 
 
 def main():
