@@ -69,3 +69,16 @@ Flow-Filter: *Viewed Product zero times since starting this flow* + *Placed Orde
 - Health Claims: Im Text steht als Wirkaussage nur der zugelassene B6-Claim. Bitte keine Schlaf- oder Stress-Versprechen ergänzen.
 - Kundenstimmen sind wörtliche Auszüge aus den Judge.me-Bewertungen. Nutze sie nur, wenn es echte Käufer sind.
 - Preise und Pakete (29,99 € / 2+1 / 3+2) sind fest im Template. Bei Änderungen im Shop: `build.py` anpassen oder in Klaviyo ändern.
+
+## Stand 01.11.2026 – von Claude über Windsor angelegt (alle als Entwurf)
+
+| Flow | Klaviyo-ID | Trigger |
+|---|---|---|
+| FK \| Welcome – Feierabend-Komplex | UGbX4Z | Liste „Feierabend Newsletter“ (XpSqCi) |
+| FK \| Abandoned Checkout – Feierabend-Komplex | XdsDCd | Checkout Started, Item Names enthält den exakten Produkttitel |
+| FK \| Browse Abandonment – Feierabend-Komplex | XtkqEp | Viewed Product, ProductName enthält „FEIERABEND“ |
+| FK \| Site Abandonment – Feierabend-Komplex | T4c6bv | Active on Site (TpctBE) |
+
+Auf Entwurf gestellt (Duplikate): TDjbsn, VKGRLF, YmqiJh, XBFZzP, XJVgaB.
+Warenkorb-Flow fehlt noch, bis „Added to Cart“ in Klaviyo erfasst wird.
+Achtung: Wird der Produkttitel in Shopify geändert, muss der Checkout-Filter angepasst werden.
