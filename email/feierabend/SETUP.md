@@ -97,3 +97,13 @@ Alle hängen an „Placed Order“ mit Filter auf den Feierabend-Produkttitel. D
 
 Alle Nachkauf- und Winback-Flows stoppen automatisch, sobald der Kunde erneut bestellt.
 Wenn sich Preise oder Pakete ändern, müssen die 40/70-€-Grenzen angepasst werden.
+
+## Live-Schaltung (01.11.2026)
+
+Shilajit-Flows als gefilterte Kopien neu angelegt (Ausschluss: Feierabend-Produkt) und live:
+SH | Abandoned Checkout (RBrXfu), SH | Browse (TmQQBs), SH | Dankesnachricht (YzYJrz),
+SH | Nachverfolgung nach dem Kauf (Sr2LD5), SH | Customer Winback (YsvXRR, jetzt mit 7 Tagen Abstand zwischen Mail 1 und 2).
+Alte Originale auf Entwurf: XxHyMC, RpawXV, X8xRL8, QRbFmS, R5ACNn.
+
+Live: alle 9 FK-Flows, 5 SH-Flows, Welcome-Serie Shilajit (Wpdf8r), Versand bestätigt, Verspätete Erfüllung.
+Offen: Warenkorb-Flow (wartet auf „Added to Cart“), Absender-Domain, Zeitzone.
